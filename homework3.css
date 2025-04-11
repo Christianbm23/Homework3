@@ -1,0 +1,138 @@
+/*
+    Program Name: patient-form.html
+    Author: Christian Martinez
+    Date Created: 2025-04-10
+    Date Updated: 2025-04-10
+    Description: Style Sheet for MIS 3371 Homework 2
+ */
+ body {
+    font-family: Arial, sans-serif;
+    background-color: rgb(247, 202, 253);
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    align-items: center;
+    padding: 20px;
+    background-color: rgb(252, 229, 255);
+    border-bottom: 2px solid #ccc;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background: rgb(252, 229, 255);
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td {
+    padding: 5px;   
+}
+
+button {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: rgb(252, 229, 255);
+    border-radius: 8px;
+}
+
+.button-container {
+    text-align: center;
+    margin-top: 15px;
+} 
+
+.checkbox-section {
+    margin-top: 20px;
+}
+
+.checkbox-section h3 {
+    margin-bottom: 10px;
+}
+
+.checkbox-section label {
+    display: block;
+    margin: 5px 0;
+}
+
+.error {
+    color: red;
+    font-size: 12px;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+.pword-message {
+    
+    font-family: sans-serif;
+    font-weight: bold;
+    /* Remove the relative positioning and left value */
+    position: static;  /* Changed from relative */
+    /* Remove the left: 100px property */
+    background: transparent;
+    padding: 10px;
+    margin-bottom: 20px; /* Add space before Medical Conditions */
+    border-spacing: 2px;
+    border-radius: 20px;
+    color: red;
+    /* Optionally add a max-width to contain the messages */
+    max-width: 80%;
+    margin-left: auto; /* This will keep it right-aligned */
+}
+
+table.output,
+tr.output,
+td.output {
+    width: 500px;
+    background-color: #f0f8ff;
+    padding: 10px;
+    border-spacing: 2px;
+    border-radius: 20px;
+    color: #333;
+}
+
+.slider-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.slider {
+    width: 100%;
+    max-width: 300px;
+}
+
+.slider-value {
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+}
