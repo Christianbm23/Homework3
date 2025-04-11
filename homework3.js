@@ -1,6 +1,6 @@
 /* 
  Name: Christian Martinez
- File: homework2.js
+ File: homework3.js
  Date Created: 2025-04-10
  Date Updated: 2025-04-10
  Purpose: Validate data on the fly from a form
