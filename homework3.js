@@ -410,9 +410,9 @@ function initializeForm() {
     const painDisplay = document.querySelector(".slider-value");
     if (painSlider && painDisplay) {
         painSlider.addEventListener("input", () => {
-            painDisplay.textContent = `${painSlider.value}/10`;
+            painDisplay.textContent = `${painSlider.value}`;
         });
-        painDisplay.textContent = `${painSlider.value}/10`;
+        painDisplay.textContent = `${painSlider.value}`;
     }
     
     // Setup real-time validation
