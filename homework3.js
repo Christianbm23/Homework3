@@ -2,550 +2,471 @@
  Name: Christian Martinez
  File: homework3.js
  Date Created: 2025-04-10
- Date Updated: 2025-04-11
+ Date Updated: 2025-04-13
  Purpose: Validate data on the fly from a form
 */
+ 
+// Validation patterns
+const PATTERNS = {
+    firstName: /^[a-zA-Z'\-]{1,30}$/,
+    middleInitial: /^[a-zA-Z]{0,1}$/,
+    lastName: /^[a-zA-Z'\-2-5]{1,30}$/,
+    address: /^[a-zA-Z0-9\s\-\.,#']+$/,
+    city: /^[a-zA-Z\s\-']{2,30}$/,
+    zipCode: /^\d{5}(-\d{4})?$/,
+    phoneNumber: /^\d{3}-\d{3}-\d{4}$/,
+    email: /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,20}$/i,
+    userId: /^[a-zA-Z][a-zA-Z0-9_\-]{4,19}$/
+};
 
-// First Name Validation 
-function validateFname() {
-    let firstName = document.getElementById("fname");
-    let firstNameError = document.getElementById("fname-error");
-   
-    if (firstName.value.trim().length === 0) {
-        firstNameError.innerHTML = "First name cannot be blank";
+// Generic field validator
+function validateField(fieldId, pattern, errorMsg, required = true, minLen = 1, maxLen = 30) {
+    const field = document.getElementById(fieldId);
+    const errorElement = document.getElementById(`${fieldId}-error`) || createErrorElement(fieldId);
+    const fieldName = fieldId.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+
+    if (required && !field.value.trim()) {
+        errorElement.textContent = `${fieldName} cannot be blank`;
         return false;
-    } else if (!firstName.checkValidity()) {
-        firstNameError.innerHTML = "First name can only contain letters, apostrophes, and dashes";
-        return false;
-    } else {
-        firstNameError.innerHTML = "";
-        return true;
     }
+
+    if (field.value.trim()) {
+        if (field.value.length < minLen) {
+            errorElement.textContent = `Must be at least ${minLen} characters`;
+            return false;
+        }
+        if (field.value.length > maxLen) {
+            errorElement.textContent = `Cannot exceed ${maxLen} characters`;
+            return false;
+        }
+        if (pattern && !pattern.test(field.value)) {
+            errorElement.textContent = errorMsg;
+            return false;
+        }
+    }
+
+    errorElement.textContent = "";
+    return true;
 }
 
-// Middle Initial Validation 
-function validateMini() {
-    let middleInitial = document.getElementById("mini");
-    let middleInitialError = document.getElementById("mini-error");
-   
-    if (middleInitial.value.length > 0 && !middleInitial.checkValidity()) {
-        middleInitialError.innerHTML = "Middle initial can only be a letter";
-        return false;
-    } else {
-        middleInitialError.innerHTML = "";
-        return true;
-    }
-}
+// Field-specific validators
+const validateFname = () => validateField("fname", PATTERNS.firstName, 
+    "First name can only contain letters, apostrophes, and dashes");
 
-// Last Name Validation 
-function validateLname() {
-    let lastName = document.getElementById("lname");
-    let lastNameError = document.getElementById("lname-error");
-   
-    if (lastName.value.trim().length === 0) {
-        lastNameError.innerHTML = "Last name cannot be blank";
-        return false;
-    } else if (!lastName.checkValidity()) {
-        lastNameError.innerHTML = "Last name can only contain letters, apostrophes, and dashes";
-        return false;
-    } else {
-        lastNameError.innerHTML = "";
-        return true;
-    }
-}
+const validateMini = () => validateField("mini", PATTERNS.middleInitial, 
+    "Middle initial can only be a letter", false, 0, 1);
 
-// Date of Birth Validation
-function validateDob() {
-    let dateOfBirth = document.getElementById("dob");
-    let dateOfBirthError = document.getElementById("dob-error");
-   
-    if (!dateOfBirth.value) {
-        dateOfBirthError.innerHTML = "Date of birth is required";
+const validateLname = () => validateField("lname", PATTERNS.lastName, 
+    "Last name can only contain letters, apostrophes, dashes, and numbers 2-5");
+
+const validateAddress1 = () => validateField("address1", PATTERNS.address, 
+    "Please enter a valid address", true, 2, 30);
+
+const validateAddress2 = () => validateField("address2", PATTERNS.address, 
+    "Please enter a valid address", false, 2, 30);
+
+const validateCity = () => validateField("city", PATTERNS.city, 
+    "City name can only contain letters, spaces, hyphens, and apostrophes", true, 2, 30);
+
+const validateEmail = () => validateField("email", PATTERNS.email, 
+    "Please enter a valid email address (format: name@domain.tld)");
+
+function validateUid() {
+    const userId = document.getElementById("uid");
+    userId.value = userId.value.toLowerCase();
+    
+    if (!validateField("uid", PATTERNS.userId, 
+        "User ID can only contain letters, numbers, underscores, and dashes", true, 5, 20)) {
         return false;
     }
     
-    let inputDate = new Date(dateOfBirth.value);
-    let today = new Date();
-    let oldestAllowed = new Date();
-    oldestAllowed.setFullYear(today.getFullYear() - 120);
+    if (!isNaN(userId.value.charAt(0))) {
+        document.getElementById("uid-error").textContent = "User ID cannot start with a number";
+        return false;
+    }
+    
+    return true;
+}
+
+// Date validation
+function validateDob() {
+    const dob = document.getElementById("dob");
+    const errorElement = document.getElementById("dob-error") || createErrorElement("dob");
+    
+    if (!dob.value) {
+        errorElement.textContent = "Date of birth is required";
+        return false;
+    }
+    
+    const inputDate = new Date(dob.value);
+    const today = new Date();
+    const oldestDate = new Date();
+    oldestDate.setFullYear(today.getFullYear() - 120);
 
     if (inputDate > today) {
-        dateOfBirthError.innerHTML = "Date can't be in the future";
+        errorElement.textContent = "Date can't be in the future";
         return false;
-    } else if (inputDate < oldestAllowed) {
-        dateOfBirthError.innerHTML = "Date can't be more than 120 years ago";
-        return false;
-    } else {
-        dateOfBirthError.innerHTML = "";
-        return true;
     }
+    if (inputDate < oldestDate) {
+        errorElement.textContent = "Date can't be more than 120 years ago";
+        return false;
+    }
+    
+    errorElement.textContent = "";
+    return true;
 }
 
-// Social Security Number Validation and Formatting
+// SSN validation and formatting
 function validateSsn() {
-    let ssnInput = document.getElementById("ssn");
-    let ssnError = document.getElementById("ssn-error");
-    let ssnDigits = ssnInput.value.replace(/\D/g, "");
-   
-    if (ssnDigits.length !== 9) {
-        ssnError.innerHTML = "Please enter a valid 9-digit SSN";
+    const ssn = document.getElementById("ssn");
+    const errorElement = document.getElementById("ssn-error") || createErrorElement("ssn");
+    const digits = ssn.value.replace(/\D/g, "");
+    
+    if (!digits) {
+        errorElement.textContent = "SSN is required";
         return false;
-    } else {
-        // Format as XXX-XX-XXXX
-        ssnInput.value = `${ssnDigits.substring(0, 3)}-${ssnDigits.substring(3, 5)}-${ssnDigits.substring(5, 9)}`;
-        ssnError.innerHTML = "";
-        return true;
     }
+    if (digits.length !== 9) {
+        errorElement.textContent = "Please enter a valid 9-digit SSN";
+        return false;
+    }
+    
+    ssn.value = `${digits.substring(0, 3)}-${digits.substring(3, 5)}-${digits.substring(5, 9)}`;
+    errorElement.textContent = "";
+    return true;
 }
 
-// Format SSN as user types
 function formatSsn(input) {
-    let ssnDigits = input.value.replace(/\D/g, "");
+    const digits = input.value.replace(/\D/g, "");
+    if (!digits) return;
     
-    if (ssnDigits.length > 0) {
-        if (ssnDigits.length <= 3) {
-            input.value = ssnDigits;
-        } else if (ssnDigits.length <= 5) {
-            input.value = `${ssnDigits.substring(0, 3)}-${ssnDigits.substring(3)}`;
-        } else {
-            input.value = `${ssnDigits.substring(0, 3)}-${ssnDigits.substring(3, 5)}-${ssnDigits.substring(5, 9)}`;
-        }
-    }
-}
-
-// Address Line 1 Validation
-function validateAddress1() {
-    let address1 = document.getElementById("address1");
-    let address1Error = document.getElementById("address1-error");
-   
-    if (address1.value.trim().length === 0) {
-        address1Error.innerHTML = "Address is required";
-        return false;
-    } else if (address1.value.length < 2) {
-        address1Error.innerHTML = "Address must be at least 2 characters";
-        return false;
-    } else if (address1.value.length > 30) {
-        address1Error.innerHTML = "Address cannot exceed 30 characters";
-        return false;
-    } else if (!address1.checkValidity()) {
-        address1Error.innerHTML = "Please enter a valid address";
-        return false;
+    if (digits.length <= 3) {
+        input.value = digits;
+    } else if (digits.length <= 5) {
+        input.value = `${digits.substring(0, 3)}-${digits.substring(3)}`;
     } else {
-        address1Error.innerHTML = "";
-        return true;
+        input.value = `${digits.substring(0, 3)}-${digits.substring(3, 5)}-${digits.substring(5, 9)}`;
     }
 }
 
-// Address Line 2 Validation
-function validateAddress2() {
-    let address2 = document.getElementById("address2");
-    let address2Error = document.getElementById("address2-error");
-   
-    if (address2.value.length > 0) {
-        if (address2.value.length < 2) {
-            address2Error.innerHTML = "Address must be at least 2 characters";
-            return false;
-        } else if (address2.value.length > 30) {
-            address2Error.innerHTML = "Address cannot exceed 30 characters";
-            return false;
-        } else if (!address2.checkValidity()) {
-            address2Error.innerHTML = "Please enter a valid address";
-            return false;
-        }
-    }
-    address2Error.innerHTML = "";
-    return true;
-}
-
-// City Validation
-function validateCity() {
-    let city = document.getElementById("city");
-    let cityError = document.getElementById("city-error");
-    
-    if (city.value.trim().length === 0) {
-        cityError.innerHTML = "City is required";
-        return false;
-    } else if (city.value.length < 2) {
-        cityError.innerHTML = "City must be at least 2 characters";
-        return false;
-    } else if (city.value.length > 30) {
-        cityError.innerHTML = "City cannot exceed 30 characters";
-        return false;
-    } else if (!city.checkValidity()) {
-        cityError.innerHTML = "City can only contain letters, spaces, hyphens, and apostrophes";
-        return false;
-    } else {
-        cityError.innerHTML = "";
-        return true;
-    }
-}
-
-// State Validation
-function validateState() {
-    let state = document.getElementById("state");
-    let stateError = document.getElementById("state-error");
-    
-    if (state.value === "") {
-        stateError.innerHTML = "Please select a state";
-        return false;
-    } else {
-        stateError.innerHTML = "";
-        return true;
-    }
-}
-
-// Zip Code Validation and Formatting
+// Zip code validation
 function validateZcode() {
-    let zipInput = document.getElementById("zcode");
-    let zipError = document.getElementById("zcode-error");
-    let zipValue = zipInput.value.replace(/[^\d-]/g, "");
-
-    if (zipValue.trim().length === 0) {
-        zipError.innerHTML = "Zip code is required";
+    const zip = document.getElementById("zcode");
+    const errorElement = document.getElementById("zcode-error") || createErrorElement("zcode");
+    const value = zip.value.replace(/[^\d-]/g, "");
+    
+    if (!value.trim()) {
+        errorElement.textContent = "Zip code is required";
+        return false;
+    }
+    if (!PATTERNS.zipCode.test(zip.value)) {
+        errorElement.textContent = "Please enter a valid 5-digit or 9-digit zip code";
         return false;
     }
     
-    if (!zipInput.checkValidity()) {
-        zipError.innerHTML = "Please enter a valid 5-digit or 9-digit zip code (format: 12345 or 12345-6789)";
-        return false;
-    }
-
-    // Format as XXXXX or XXXXX-XXXX
-    if (zipValue.includes("-")) {
-        let parts = zipValue.split("-");
-        if (parts[0].length === 5 && parts[1].length <= 4) {
-            zipInput.value = `${parts[0]}-${parts[1]}`;
-        }
-    } else if (zipValue.length > 5) {
-        zipInput.value = `${zipValue.slice(0, 5)}-${zipValue.slice(5, 9)}`;
-    } else {
-        zipInput.value = zipValue.slice(0, 5);
-    }
-
-    zipError.innerHTML = "";
+    errorElement.textContent = "";
     return true;
 }
 
-// Format zip code as user types
 function formatZipCode(input) {
-    let zipDigits = input.value.replace(/[^\d-]/g, "");
-    
-    if (zipDigits.length > 5 && !zipDigits.includes("-")) {
-        input.value = `${zipDigits.slice(0, 5)}-${zipDigits.slice(5, 9)}`;
+    const digits = input.value.replace(/[^\d-]/g, "");
+    if (digits.length > 5 && !digits.includes("-")) {
+        input.value = `${digits.slice(0, 5)}-${digits.slice(5, 9)}`;
     } else {
-        input.value = zipDigits;
+        input.value = digits;
     }
 }
 
-// Phone Number Validation and Formatting
+// Phone validation
 function validatePhone() {
-    let phoneInput = document.getElementById("phone");
-    let phoneError = document.getElementById("phone-error");
-   
-    if (phoneInput.value.trim().length === 0) {
-        phoneError.innerHTML = "Phone number is required";
-        return false;
-    } else if (!phoneInput.checkValidity()) {
-        phoneError.innerHTML = "Please enter a valid phone number (format: 123-456-7890)";
-        return false;
-    } else {
-        phoneError.innerHTML = "";
-        return true;
-    }
-}
-
-// Format phone number as user types
-function formatPhoneNumber(input) {
-    let phoneDigits = input.value.replace(/\D/g, "");
+    const phone = document.getElementById("phone");
+    const errorElement = document.getElementById("phone-error") || createErrorElement("phone");
     
-    if (phoneDigits.length > 0) {
-        if (phoneDigits.length <= 3) {
-            input.value = phoneDigits;
-        } else if (phoneDigits.length <= 6) {
-            input.value = `${phoneDigits.substring(0, 3)}-${phoneDigits.substring(3)}`;
-        } else {
-            input.value = `${phoneDigits.substring(0, 3)}-${phoneDigits.substring(3, 6)}-${phoneDigits.substring(6, 10)}`;
-        }
+    if (!phone.value.trim()) {
+        errorElement.textContent = "Phone number is required";
+        return false;
     }
+    if (!PATTERNS.phoneNumber.test(phone.value)) {
+        errorElement.textContent = "Please enter a valid phone number (format: 123-456-7890)";
+        return false;
+    }
+    
+    errorElement.textContent = "";
+    return true;
 }
 
-// Email Validation
-function validateEmail() {
-    let emailInput = document.getElementById("email");
-    let emailError = document.getElementById("email-error");
-   
-    if (emailInput.value.trim().length === 0) {
-        emailError.innerHTML = "Email is required";
-        return false;
-    } else if (!emailInput.checkValidity()) {
-        emailError.innerHTML = "Please enter a valid email address (format: name@domain.tld)";
-        return false;
+function formatPhoneNumber(input) {
+    const digits = input.value.replace(/\D/g, "");
+    if (!digits) return;
+    
+    if (digits.length <= 3) {
+        input.value = digits;
+    } else if (digits.length <= 6) {
+        input.value = `${digits.substring(0, 3)}-${digits.substring(3)}`;
     } else {
-        emailError.innerHTML = "";
-        return true;
+        input.value = `${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
     }
 }
 
-// User ID Validation
-function validateUid() {
-    let userIdInput = document.getElementById("uid");
-    let userIdError = document.getElementById("uid-error");
-   
-    // Convert to lowercase
-    userIdInput.value = userIdInput.value.toLowerCase();
-
-    if (userIdInput.value.trim().length === 0) {
-        userIdError.innerHTML = "User ID is required";
-        return false;
-    } else if (!isNaN(userIdInput.value.charAt(0))) {
-        userIdError.innerHTML = "User ID cannot start with a number";
-        return false;
-    }
-
-    let validChars = /^[a-zA-Z0-9_-]+$/;
-    if (!validChars.test(userIdInput.value)) {
-        userIdError.innerHTML = "User ID can only contain letters, numbers, underscores, and dashes";
-        return false;
-    } else if (userIdInput.value.length < 5) {
-        userIdError.innerHTML = "User ID must be at least 5 characters";
-        return false;
-    } else if (userIdInput.value.length > 20) {
-        userIdError.innerHTML = "User ID cannot exceed 20 characters";
-        return false;
-    } else {
-        userIdError.innerHTML = "";
-        return true;
-    }
+// Radio button and dropdown validation
+function validateGender() {
+    const isSelected = [...document.getElementsByName("gender")].some(radio => radio.checked);
+    const errorElement = document.getElementById("gender-error") || createErrorElement("gender");
+    
+    errorElement.textContent = isSelected ? "" : "Please select a gender";
+    return isSelected;
 }
 
-// Password Validation with real-time feedback
+function validateState() {
+    const state = document.getElementById("state");
+    const errorElement = document.getElementById("state-error") || createErrorElement("state");
+    
+    if (!state.value) {
+        errorElement.textContent = "Please select a state";
+        return false;
+    }
+    
+    errorElement.textContent = "";
+    return true;
+}
+
+// Password validation
 function validatePword() {
-    let passwordInput = document.getElementById("pword").value;
-    let userId = document.getElementById("uid").value;
-    let firstName = document.getElementById("fname").value;
-    let lastName = document.getElementById("lname").value;
-    let passwordError = document.getElementById("pword-error");
-    let messages = [];
-   
+    const password = document.getElementById("pword").value;
+    const userId = document.getElementById("uid").value;
+    const firstName = document.getElementById("fname").value;
+    const lastName = document.getElementById("lname").value;
+    const messages = [];
+    
     // Clear existing messages
     for (let i = 1; i <= 4; i++) {
-        document.getElementById(`msg${i}`).innerHTML = "";
-    }
-   
-    // Check password length
-    if (passwordInput.length < 8) {
-        messages.push("Password must be at least 8 characters");
+        document.getElementById(`msg${i}`).textContent = "";
     }
     
-    // Check for required character types
-    if (!passwordInput.match(/[a-z]/)) {
-        messages.push("Enter at least one lowercase letter");
-    }
-    
-    if (!passwordInput.match(/[A-Z]/)) {
-        messages.push("Enter at least one uppercase letter");
-    }
-    
-    if (!passwordInput.match(/[0-9]/)) {
-        messages.push("Enter at least one number");
-    }
-    
-    // Check for special characters
-    if (!passwordInput.match(/[!@#$%^&*\(\)\-_+=\\\/><.,`~]/)) {
-        messages.push("Enter at least one special character (!@#$%^&*()-_+=\\><.,`~)");
-    }
-    
-    // Check if password contains user ID or name elements
-    if (userId && (
-        passwordInput.toLowerCase().includes(userId.toLowerCase()) || 
-        (firstName && passwordInput.toLowerCase().includes(firstName.toLowerCase())) || 
-        (lastName && passwordInput.toLowerCase().includes(lastName.toLowerCase()))
-    )) {
-        messages.push("Password cannot contain your user ID or name");
-    }
-   
-    // Display up to 4 error messages
-    messages.slice(0, 4).forEach((msg, idx) => {
-        document.getElementById(`msg${idx+1}`).innerHTML = msg;
-    });
-   
-    // Update password error summary
-    if (messages.length > 0) {
-        passwordError.innerHTML = "Password does not meet requirements";
-        return false;
+    // Check requirements
+    if (!password) {
+        messages.push("Password is required");
     } else {
-        passwordError.innerHTML = "";
-        return true;
-    }
-}
-
-// Password Confirmation
-function confirmPword() {
-    let password = document.getElementById("pword").value;
-    let confirmPassword = document.getElementById("pword2").value;
-    let confirmError = document.getElementById("pword2-error");
-   
-    if (confirmPassword.length === 0) {
-        confirmError.innerHTML = "Please confirm your password";
-        return false;
-    } else if (password !== confirmPassword) {
-        confirmError.innerHTML = "Passwords do not match";
-        return false;
-    } else {
-        confirmError.innerHTML = "";
-        return true;
-    }
-}
-
-// Validate slider
-function validateSlider() {
-    // The slider always has a value by design, so no validation is needed
-    return true;
-}
-
-// Validate all fields before submission
-function validateForm() {
-    let isValid = true;
-    
-    // Call all validation functions
-    isValid = validateFname() && isValid;
-    isValid = validateMini() && isValid;
-    isValid = validateLname() && isValid;
-    isValid = validateDob() && isValid;
-    isValid = validateSsn() && isValid;
-    isValid = validateAddress1() && isValid;
-    isValid = validateAddress2() && isValid;
-    isValid = validateCity() && isValid;
-    isValid = validateState() && isValid;
-    isValid = validateZcode() && isValid;
-    isValid = validatePhone() && isValid;
-    isValid = validateEmail() && isValid;
-    isValid = validateUid() && isValid;
-    isValid = validatePword() && isValid;
-    isValid = confirmPword() && isValid;
-    
-    // Check gender selection
-    let genderSelected = false;
-    let genderRadios = document.getElementsByName("gender");
-    for (let i = 0; i < genderRadios.length; i++) {
-        if (genderRadios[i].checked) {
-            genderSelected = true;
-            break;
+        if (password.length < 8) messages.push("Must be at least 8 characters");
+        if (!/[a-z]/.test(password)) messages.push("Needs a lowercase letter");
+        if (!/[A-Z]/.test(password)) messages.push("Needs an uppercase letter");
+        if (!/[0-9]/.test(password)) messages.push("Needs a number");
+        if (!/[!@#$%^&*()\-_+=\\\/><.,`~]/.test(password)) {
+            messages.push("Needs a special character");
+        }
+        if (userId && password.toLowerCase() === userId.toLowerCase()) {
+            messages.push("Cannot match user ID");
+        }
+        if ((firstName && password.toLowerCase().includes(firstName.toLowerCase())) || 
+            (lastName && password.toLowerCase().includes(lastName.toLowerCase()))) {
+            messages.push("Cannot contain your name");
         }
     }
     
-    if (!genderSelected) {
-        alert("Please select a gender");
-        isValid = false;
+    // Display messages
+    messages.slice(0, 4).forEach((msg, i) => {
+        document.getElementById(`msg${i+1}`).textContent = msg;
+    });
+    
+    const errorElement = document.getElementById("pword-error") || createErrorElement("pword");
+    errorElement.textContent = messages.length ? "Password doesn't meet requirements" : "";
+    return messages.length === 0;
+}
+
+function confirmPword() {
+    const password = document.getElementById("pword").value;
+    const confirm = document.getElementById("pword2").value;
+    const errorElement = document.getElementById("pword2-error") || createErrorElement("pword2");
+    
+    if (!confirm) {
+        errorElement.textContent = "Please confirm your password";
+        return false;
+    }
+    if (password !== confirm) {
+        errorElement.textContent = "Passwords don't match";
+        return false;
+    }
+    
+    errorElement.textContent = "";
+    return true;
+}
+
+// Helper functions
+function createErrorElement(fieldId) {
+    const errorSpan = document.createElement("span");
+    errorSpan.id = `${fieldId}-error`;
+    errorSpan.className = "error";
+    
+    const field = document.getElementById(fieldId);
+    if (field && field.parentNode) {
+        field.parentNode.appendChild(errorSpan);
+    }
+    
+    return errorSpan;
+}
+
+function validateEverything() {
+    const validations = [
+        validateFname, validateMini, validateLname, validateDob, validateSsn,
+        validateAddress1, validateAddress2, validateState, validateZcode,
+        validatePhone, validateGender, validateEmail, validateUid,
+        validatePword, confirmPword
+    ];
+    
+    const isValid = validations.every(validation => validation());
+    
+    // Format email to lowercase
+    const email = document.getElementById("email");
+    if (email.value) {
+        email.value = email.value.toLowerCase();
     }
     
     return isValid;
 }
 
-// Initialize pain slider
-document.addEventListener('DOMContentLoaded', function() {
-    let painSlider = document.getElementById("painLevel");
-    let valueDisplay = document.querySelector(".slider-value");
-   
-    if (painSlider && valueDisplay) {
-        // Update display on input change
-        painSlider.addEventListener('input', function() {
-            valueDisplay.textContent = `${this.value}/10`;
-        });
-       
-        // Set initial value
-        valueDisplay.textContent = `${painSlider.value}/10`;
+function focusFirstError() {
+    const errorElement = document.querySelector(".error[textContent]");
+    if (errorElement) {
+        const fieldId = errorElement.id.replace("-error", "");
+        document.getElementById(fieldId).focus();
     }
-    
-    // Add input event listeners for real-time formatting
-    document.getElementById("ssn").addEventListener('input', function() {
-        formatSsn(this);
-    });
-    
-    document.getElementById("phone").addEventListener('input', function() {
-        formatPhoneNumber(this);
-    });
-    
-    document.getElementById("zcode").addEventListener('input', function() {
-        formatZipCode(this);
-    });
-    
-    // Add validation to form submission
-    document.getElementById("signup").addEventListener('submit', function(event) {
-        if (!validateForm()) {
-            event.preventDefault(); // Prevent form submission if validation fails
-            alert("Please correct all errors before submitting the form.");
-        }
-    });
-    
-    // Add error spans for fields that don't have them yet
-    if (!document.getElementById("city-error")) {
-        let cityField = document.getElementById("city");
-        let errorSpan = document.createElement("span");
-        errorSpan.id = "city-error";
-        errorSpan.className = "error";
-        cityField.parentNode.appendChild(errorSpan);
-        cityField.addEventListener('blur', validateCity);
-    }
-    
-    if (!document.getElementById("state-error")) {
-        let stateField = document.getElementById("state");
-        let errorSpan = document.createElement("span");
-        errorSpan.id = "state-error";
-        errorSpan.className = "error";
-        stateField.parentNode.appendChild(errorSpan);
-        stateField.addEventListener('blur', validateState);
-    }
-    
-    // Add blur event listeners for fields that don't have onblur attributes
-    document.getElementById("city").addEventListener('blur', validateCity);
-    document.getElementById("state").addEventListener('blur', validateState);
-});
+}
 
-// Form Review 
+function showAlert(message) {
+    const alertBox = document.getElementById("alert-box");
+    const alertContent = document.getElementById("alert-content");
+    
+    alertContent.querySelector("h4").textContent = message;
+    alertBox.style.display = "flex";
+    
+    document.getElementById("close-alert").onclick = function() {
+        alertBox.style.display = "none";
+    };
+}
+
 function reviewInput() {
-    // First validate all fields
-    if (!validateForm()) {
-        alert("Please correct all errors before reviewing your information.");
-        return;
+    const formData = new FormData(document.getElementById("signup"));
+    let output = "<h3>Review Your Information</h3><table class='output'>";
+    const conditions = [];
+    
+    for (const [key, value] of formData.entries()) {
+        if (key === "pword" || key === "pword2") {
+            output += `<tr><td>${formatLabel(key)}:</td><td>********</td></tr>`;
+        } else if (key === "ssn") {
+            output += `<tr><td>Social Security Number:</td><td>${value.replace(/\d(?=\d{4})/g, "*")}</td></tr>`;
+        } else if (key === "medical_conditions") {
+            conditions.push(value.replace(/_/g, ' '));
+        } else {
+            output += `<tr><td>${formatLabel(key)}:</td><td>${value || "Not provided"}</td></tr>`;
+        }
     }
     
-    let form = document.getElementById("signup");
-    let formSummary = "<table class='output'><th colspan='2'>Review Your Information:</th>";
-   
-    // Loop through form elements
-    Array.from(form.elements).forEach(element => {
-        if (element.name && element.value !== "" && !["button", "submit", "reset"].includes(element.type)) {
-            let label = element.name.charAt(0).toUpperCase() + element.name.slice(1).replace(/_/g, " ");
-            
-            switch (element.type) {
-                case "checkbox":
-                    if (element.checked) {
-                        formSummary += `<tr><td align='right'>${label}</td><td>&#x2713;</td></tr>`;
-                    }
-                    break;
-                case "radio":
-                    if (element.checked) {
-                        formSummary += `<tr><td align='right'>${label}</td><td>${element.value}</td></tr>`;
-                    }
-                    break;
-                case "password":
-                    formSummary += `<tr><td align='right'>${label}</td><td>********</td></tr>`;
-                    break;
-                case "range":
-                    formSummary += `<tr><td align='right'>${label}</td><td>${element.value}/10</td></tr>`;
-                    break;
-                default:
-                    formSummary += `<tr><td align='right'>${label}</td><td>${element.value}</td></tr>`;
-            }
-        }
-    });
-   
-    formSummary += "</table>";
-    document.getElementById("showInput").innerHTML = formSummary;
+    if (conditions.length) {
+        output += `<tr><td>Medical Conditions:</td><td>${conditions.join(", ")}</td></tr>`;
+    }
+    
+    document.getElementById("showInput").innerHTML = output + "</table>";
 }
 
-// Clear Review Display
-function removeReview() {
-    document.getElementById("showInput").innerHTML = "";
+function formatLabel(key) {
+    const labels = {
+        "fname": "First Name", "mini": "Middle Initial", "lname": "Last Name",
+        "ssn": "Social Security Number", "address1": "Address Line 1", 
+        "address2": "Address Line 2", "city": "City", "state": "State",
+        "zcode": "Zip Code", "phone": "Phone Number", "dob": "Date of Birth",
+        "gender": "Gender", "email": "Email", "uid": "User ID",
+        "pword": "Password", "pword2": "Confirm Password",
+        "medical_conditions": "Medical Conditions", "painLevel": "Pain Level",
+        "notes": "Additional Notes"
+    };
+    
+    return labels[key] || key.charAt(0).toUpperCase() + key.slice(1).replace("_", " ");
 }
+
+// Initialize form
+function initializeForm() {
+    document.getElementById("alert-box").style.display = "none";
+    document.getElementById("today").textContent = new Date().toLocaleDateString();
+    
+    // Setup formatters
+    const formatters = {
+        "ssn": formatSsn,
+        "phone": formatPhoneNumber,
+        "zcode": formatZipCode
+    };
+    
+    Object.entries(formatters).forEach(([id, formatter]) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener("input", function() {
+                formatter(this);
+                window[`validate${id.charAt(0).toUpperCase() + id.slice(1)}`]();
+            });
+        }
+    });
+    
+    // Setup pain level display
+    const painSlider = document.getElementById("painLevel");
+    const painDisplay = document.querySelector(".slider-value");
+    if (painSlider && painDisplay) {
+        painSlider.addEventListener("input", () => {
+            painDisplay.textContent = `${painSlider.value}/10`;
+        });
+        painDisplay.textContent = `${painSlider.value}/10`;
+    }
+    
+    // Setup real-time validation
+    const validationMap = {
+        "fname": validateFname, "mini": validateMini, "lname": validateLname,
+        "ssn": validateSsn, "address1": validateAddress1, "address2": validateAddress2,
+        "city": validateCity, "zcode": validateZcode, "phone": validatePhone,
+        "dob": validateDob, "email": validateEmail, "uid": validateUid,
+        "pword": validatePword, "pword2": confirmPword
+    };
+    
+    Object.entries(validationMap).forEach(([id, validator]) => {
+        const field = document.getElementById(id);
+        if (field) {
+            ["input", "blur"].forEach(event => {
+                field.addEventListener(event, validator);
+            });
+        }
+    });
+    
+    // Special password validation
+    const passwordField = document.getElementById("pword");
+    if (passwordField) {
+        ["input", "blur"].forEach(event => {
+            passwordField.addEventListener(event, () => {
+                validatePword();
+                if (document.getElementById("pword2").value) {
+                    confirmPword();
+                }
+            });
+        });
+    }
+    
+    // Radio and dropdown validation
+    document.querySelectorAll('[name="gender"]').forEach(radio => {
+        radio.addEventListener("change", validateGender);
+    });
+    
+    document.getElementById("state").addEventListener("change", validateState);
+}
+
+// Event listeners
+document.addEventListener("DOMContentLoaded", () => {
+    initializeForm();
+    
+    document.getElementById("signup").addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (validateEverything()) {
+            e.target.submit();
+        } else {
+            showAlert("Please correct the highlighted fields before submitting.");
+            focusFirstError();
+        }
+    });
+    
+    document.getElementById("review").addEventListener("click", reviewInput);
+});
